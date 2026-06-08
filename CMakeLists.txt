@@ -56,6 +56,9 @@ target_include_directories(DjVuReader PRIVATE src)
 
 if(DJVU_FOUND)
     target_include_directories(DjVuReader PRIVATE ${DJVU_INCLUDE_DIRS})
+    if(DJVU_LIBRARY_DIRS)
+        target_link_directories(DjVuReader PRIVATE ${DJVU_LIBRARY_DIRS})
+    endif()
     target_link_libraries(DjVuReader PRIVATE ${DJVU_LIBRARIES})
 endif()
 
@@ -72,7 +75,19 @@ if(APPLE)
         MACOSX_BUNDLE_GUI_IDENTIFIER  com.opensource.djvureader
         MACOSX_BUNDLE_BUNDLE_VERSION  ${PROJECT_VERSION}
         MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION}
+        MACOSX_BUNDLE_ICON_FILE VEADjvuReader
     )
+    set_source_files_properties(resources/VEADjvuReader.icns
+        PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+    target_sources(DjVuReader PRIVATE resources/VEADjvuReader.icns)
+endif()
+
+# ── Windows: иконка приложения ────────────────────────────────────────────────
+if(WIN32)
+    enable_language(RC)
+    configure_file(resources/VEADjvuReader.ico ${CMAKE_BINARY_DIR}/app.ico COPYONLY)
+    file(WRITE ${CMAKE_BINARY_DIR}/app.rc "IDI_ICON1 ICON \"app.ico\"\n")
+    target_sources(DjVuReader PRIVATE ${CMAKE_BINARY_DIR}/app.rc)
 endif()
 
 # ── Windows: убираем консоль в Release ────────────────────────────────────────

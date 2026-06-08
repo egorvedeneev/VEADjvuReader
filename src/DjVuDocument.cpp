@@ -28,14 +28,15 @@ void DjVuDocument::close() {
 
 QSize DjVuDocument::pageSize(int) const { return {595, 842}; } // A4
 
-QImage DjVuDocument::renderPage(int pageIndex, int targetWidth, double /*zoom*/) {
+QImage DjVuDocument::renderPage(int pageIndex, int targetWidth, double zoom) {
     QSize sz = pageSize(pageIndex);
-    int h = int(sz.height() * targetWidth / double(sz.width()));
-    QImage img(targetWidth, h, QImage::Format_RGB32);
+    int w = qMax(1, int(targetWidth * zoom));
+    int h = qMax(1, int(sz.height() * w / double(sz.width())));
+    QImage img(w, h, QImage::Format_RGB32);
     img.fill(Qt::white);
     QPainter p(&img);
     p.setPen(QPen(QColor(200,200,200), 1));
-    p.drawRect(0, 0, targetWidth-1, h-1);
+    p.drawRect(0, 0, w - 1, h - 1);
     p.setPen(QColor(160,160,160));
     QFont f; f.setPixelSize(18); p.setFont(f);
     p.drawText(img.rect(), Qt::AlignCenter,

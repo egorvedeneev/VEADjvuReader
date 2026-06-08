@@ -1,4 +1,4 @@
-# VEA DjVu Reader
+# DjVu Reader
 
 Лёгкий кроссплатформенный просмотрщик DjVu на Qt6 + libdjvulibre.  
 Поддерживает Windows и macOS.
@@ -17,7 +17,7 @@
 
 ## Сборка на Windows
 
-### 1. Установка зависимостей
+### 1. Установи зависимости
 
 **Qt 6** (>= 6.4):  
 https://www.qt.io/download-qt-installer  
@@ -32,7 +32,7 @@ C:\vcpkg\vcpkg install djvulibre:x64-windows
 
 **CMake** (>= 3.20): https://cmake.org/download/
 
-### 2. Сборка проекта
+### 2. Собери проект
 
 Открой **x64 Native Tools Command Prompt for VS 2022**:
 
@@ -58,14 +58,14 @@ C:\Qt\6.x.x\msvc2022_64\bin\windeployqt.exe DjVuReader.exe
 
 ## Сборка на macOS
 
-### 1. Установка зависимостей
+### 1. Установи зависимости
 
 ```bash
 # Homebrew (если нет: https://brew.sh)
 brew install qt djvulibre cmake
 ```
 
-### 2. Сборка проекта
+### 2. Собери проект
 
 ```bash
 cd djvu-reader
@@ -127,4 +127,4 @@ djvu-reader/
 
 ## Лицензия
 
-MIT. libdjvulibre распространяется под GPL v2. Да и вообще можно что угодно делать с этим проектом. Я даже C++ толком не знаю.
+MIT — делай что хочешь. libdjvulibre распространяется под GPL v2.

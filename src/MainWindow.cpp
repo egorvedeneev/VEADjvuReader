@@ -18,6 +18,7 @@
 #include <QKeyEvent>
 #include <QMessageBox>
 #include <QHBoxLayout>
+#include <QFileInfo>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -35,6 +36,10 @@ MainWindow::MainWindow(QWidget *parent)
                 m_statusLabel->setText("Error: " + msg);
                 QMessageBox::warning(this, "Error", msg);
             });
+
+    m_renderTimer.setSingleShot(true);
+    m_renderTimer.setInterval(150);
+    connect(&m_renderTimer, &QTimer::timeout, this, &MainWindow::renderCurrentPage);
 }
 
 MainWindow::~MainWindow() {}
@@ -50,7 +55,9 @@ void MainWindow::setupUi() {
     connect(m_pageView, &PageView::zoomChanged, this, [this](double z){
         m_zoom = z;
         m_zoomLabel->setText(QString("%1%").arg(int(z * 100)));
+        scheduleRender();
     });
+    connect(m_pageView, &PageView::viewChanged, this, &MainWindow::scheduleRender);
 
     // Thumbnail dock
     m_thumbPanel = new ThumbnailPanel(this);
@@ -80,29 +87,30 @@ void MainWindow::setupUi() {
 void MainWindow::setupActions() {
     // ── File menu ──────────────────────────────────────────────────────────
     auto *fileMenu  = menuBar()->addMenu("&File");
-    auto *actOpen   = fileMenu->addAction("&Open…", this, &MainWindow::onOpenFile,
-                                          QKeySequence::Open);
+    auto *actOpen   = fileMenu->addAction("&Open…", QKeySequence::Open,
+                                          this, &MainWindow::onOpenFile);
     fileMenu->addSeparator();
-    fileMenu->addAction("&Quit", qApp, &QApplication::quit, QKeySequence::Quit);
+    fileMenu->addAction("&Quit", QKeySequence::Quit, qApp, &QApplication::quit);
 
     // ── View menu ──────────────────────────────────────────────────────────
     auto *viewMenu  = menuBar()->addMenu("&View");
-    auto *actZoomIn  = viewMenu->addAction("Zoom &In",  this, &MainWindow::onZoomIn,  QKeySequence::ZoomIn);
-    auto *actZoomOut = viewMenu->addAction("Zoom &Out", this, &MainWindow::onZoomOut, QKeySequence::ZoomOut);
-    auto *actFit     = viewMenu->addAction("&Fit Width", this, &MainWindow::onZoomFit, Qt::Key_F);
+    m_actZoomIn  = viewMenu->addAction("Zoom &In",  QKeySequence::ZoomIn,  this, &MainWindow::onZoomIn);
+    m_actZoomOut = viewMenu->addAction("Zoom &Out", QKeySequence::ZoomOut, this, &MainWindow::onZoomOut);
+    m_actFit     = viewMenu->addAction("&Fit Width", QKeySequence(Qt::Key_F), this, &MainWindow::onZoomFit);
     viewMenu->addSeparator();
-    auto *actPrev    = viewMenu->addAction("&Previous Page", this, &MainWindow::onPrevPage, Qt::Key_Left);
-    auto *actNext    = viewMenu->addAction("&Next Page",     this, &MainWindow::onNextPage,  Qt::Key_Right);
+    m_actPrev    = viewMenu->addAction("&Previous Page", QKeySequence(Qt::Key_Left),  this, &MainWindow::onPrevPage);
+    m_actNext    = viewMenu->addAction("&Next Page",     QKeySequence(Qt::Key_Right), this, &MainWindow::onNextPage);
 
     // ── Toolbar ────────────────────────────────────────────────────────────
     m_toolbar->addAction(actOpen);
     m_toolbar->addSeparator();
 
-    auto *actPrevTb = m_toolbar->addAction("◀", this, &MainWindow::onPrevPage);
-    actPrevTb->setToolTip("Previous page (←)");
+    m_actPrevTb = m_toolbar->addAction("◀", this, &MainWindow::onPrevPage);
+    m_actPrevTb->setToolTip("Previous page (←)");
 
     // Page spin
     m_pageSpinBox = new QSpinBox(this);
+    m_pageSpinBox->setButtonSymbols(QSpinBox::NoButtons);
     m_pageSpinBox->setMinimum(1);
     m_pageSpinBox->setMaximum(1);
     m_pageSpinBox->setMinimumWidth(52);
@@ -112,8 +120,8 @@ void MainWindow::setupActions() {
     m_pageCountLabel = new QLabel(" / 0", this);
     m_toolbar->addWidget(m_pageCountLabel);
 
-    auto *actNextTb = m_toolbar->addAction("▶", this, &MainWindow::onNextPage);
-    actNextTb->setToolTip("Next page (→)");
+    m_actNextTb = m_toolbar->addAction("▶", this, &MainWindow::onNextPage);
+    m_actNextTb->setToolTip("Next page (→)");
 
     m_toolbar->addSeparator();
     m_toolbar->addAction("−", this, &MainWindow::onZoomOut)->setToolTip("Zoom out (Ctrl+−)");
@@ -123,11 +131,14 @@ void MainWindow::setupActions() {
     connect(m_pageSpinBox, QOverload<int>::of(&QSpinBox::valueChanged),
             this, &MainWindow::onPageSpinChanged);
 
-    // Disable nav until doc open
-    for (auto *a : {actPrev, actNext, actZoomIn, actZoomOut, actFit})
-        a->setEnabled(false);
-    actPrevTb->setEnabled(false);
-    actNextTb->setEnabled(false);
+    setDocumentActionsEnabled(false);
+}
+
+void MainWindow::setDocumentActionsEnabled(bool enabled) {
+    for (auto *a : {m_actPrev, m_actNext, m_actZoomIn, m_actZoomOut, m_actFit})
+        if (a) a->setEnabled(enabled);
+    if (m_actPrevTb) m_actPrevTb->setEnabled(enabled);
+    if (m_actNextTb) m_actNextTb->setEnabled(enabled);
 }
 
 void MainWindow::setupStyle() {
@@ -192,6 +203,7 @@ void MainWindow::openFile(const QString &path) {
 }
 
 void MainWindow::onDocumentOpened(int pageCount) {
+    setDocumentActionsEnabled(true);
     setWindowTitle(QFileInfo(m_doc->filePath()).fileName() + " — DjVu Reader");
     m_pageSpinBox->setMaximum(pageCount);
     m_pageCountLabel->setText(QString(" / %1").arg(pageCount));
@@ -220,6 +232,7 @@ void MainWindow::goToPage(int idx) {
     if (!m_doc->isOpen()) return;
     idx = qBound(0, idx, m_doc->pageCount() - 1);
     m_currentPage = idx;
+    m_renderTimer.stop();
     renderCurrentPage();
     m_thumbPanel->setCurrentPage(idx);
     m_pageSpinBox->blockSignals(true);
@@ -227,10 +240,17 @@ void MainWindow::goToPage(int idx) {
     m_pageSpinBox->blockSignals(false);
 }
 
+void MainWindow::scheduleRender() {
+    if (!m_doc->isOpen()) return;
+    m_renderTimer.start();
+}
+
 void MainWindow::renderCurrentPage() {
-    int vw = m_pageView->viewport()->width();
-    QImage img = m_doc->renderPage(m_currentPage, qMax(vw, 400));
-    m_pageView->setPage(QPixmap::fromImage(img));
+    if (!m_doc->isOpen()) return;
+    const int vw = qMax(m_pageView->viewport()->width() - 16, 400);
+    const double zoom = m_pageView->isFitMode() ? 1.0 : m_pageView->zoom();
+    QImage img = m_doc->renderPage(m_currentPage, vw, zoom);
+    m_pageView->setPage(QPixmap::fromImage(img), zoom);
 }
 
 void MainWindow::onPageSelected(int idx) { goToPage(idx); }

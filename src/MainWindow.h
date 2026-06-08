@@ -5,8 +5,10 @@
 #include <QSpinBox>
 #include <QToolBar>
 #include <QDockWidget>
+#include <QTimer>
 #include <memory>
 
+class QAction;
 class DjVuDocument;
 class PageView;
 class ThumbnailPanel;
@@ -41,7 +43,9 @@ private:
     void setupStyle();
     void goToPage(int idx);
     void renderCurrentPage();
+    void scheduleRender();
     void loadThumbnails();
+    void setDocumentActionsEnabled(bool enabled);
 
     std::unique_ptr<DjVuDocument> m_doc;
     PageView      *m_pageView      = nullptr;
@@ -51,6 +55,14 @@ private:
     QLabel        *m_zoomLabel     = nullptr;
     QSpinBox      *m_pageSpinBox   = nullptr;
     QLabel        *m_pageCountLabel = nullptr;
+    QAction       *m_actPrev        = nullptr;
+    QAction       *m_actNext        = nullptr;
+    QAction       *m_actZoomIn      = nullptr;
+    QAction       *m_actZoomOut     = nullptr;
+    QAction       *m_actFit         = nullptr;
+    QAction       *m_actPrevTb      = nullptr;
+    QAction       *m_actNextTb      = nullptr;
+    QTimer         m_renderTimer;
 
     int    m_currentPage = 0;
     double m_zoom        = 1.0;

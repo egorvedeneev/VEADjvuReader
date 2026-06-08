@@ -12,39 +12,47 @@ PageView::PageView(QWidget *parent) : QScrollArea(parent) {
     setStyleSheet("background: #2b2b2b;");
 }
 
-void PageView::setPage(const QPixmap &px) {
-    m_original = px;
-    m_fitMode  = true;
-    applyZoom();
+void PageView::setPage(const QPixmap &px, double zoomAtRender) {
+    m_page = px;
+    m_baseZoom = zoomAtRender;
+    updateDisplay();
 }
 
 void PageView::setZoom(double z) {
-    m_zoom    = qBound(0.1, z, 5.0);
+    m_zoom = qBound(0.1, z, 5.0);
     m_fitMode = false;
-    applyZoom();
+    showPreview();
     emit zoomChanged(m_zoom);
 }
 
 void PageView::fitToWidth(int) {
     m_fitMode = true;
-    applyZoom();
+    m_zoom = 1.0;
+    emit zoomChanged(m_zoom);
+    emit viewChanged();
 }
 
-void PageView::applyZoom() {
-    if (m_original.isNull()) return;
-    if (m_fitMode) {
-        int vw = viewport()->width() - 16;
-        m_zoom = vw / double(m_original.width());
-        m_zoom = qBound(0.05, m_zoom, 5.0);
+void PageView::updateDisplay() {
+    if (m_page.isNull()) return;
+    m_label->setPixmap(m_page);
+    m_label->resize(m_page.size());
+}
+
+void PageView::showPreview() {
+    if (m_page.isNull() || m_baseZoom <= 0) return;
+    const double scale = m_zoom / m_baseZoom;
+    if (qAbs(scale - 1.0) < 0.001) {
+        updateDisplay();
+        return;
     }
-    QSize sz = m_original.size() * m_zoom;
-    m_label->setPixmap(m_original.scaled(sz, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    const QSize sz = m_page.size() * scale;
+    m_label->setPixmap(m_page.scaled(sz, Qt::KeepAspectRatio, Qt::SmoothTransformation));
     m_label->resize(sz);
 }
 
 void PageView::wheelEvent(QWheelEvent *e) {
     if (e->modifiers() & Qt::ControlModifier) {
-        double delta = e->angleDelta().y() > 0 ? 1.12 : (1.0 / 1.12);
+        const double delta = e->angleDelta().y() > 0 ? 1.12 : (1.0 / 1.12);
         setZoom(m_zoom * delta);
         e->accept();
     } else {
@@ -54,5 +62,5 @@ void PageView::wheelEvent(QWheelEvent *e) {
 
 void PageView::resizeEvent(QResizeEvent *e) {
     QScrollArea::resizeEvent(e);
-    if (m_fitMode) applyZoom();
+    if (m_fitMode) emit viewChanged();
 }

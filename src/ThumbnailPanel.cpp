@@ -1,5 +1,7 @@
 #include "ThumbnailPanel.h"
 #include <QListWidgetItem>
+#include <QScrollBar>
+#include <QWheelEvent>
 
 ThumbnailPanel::ThumbnailPanel(QWidget *parent) : QListWidget(parent) {
     setViewMode(QListView::ListMode);
@@ -8,6 +10,7 @@ ThumbnailPanel::ThumbnailPanel(QWidget *parent) : QListWidget(parent) {
     setGridSize({THUMB_W + 16, THUMB_H + 30});
     setFixedWidth(THUMB_W + 32);
     setSpacing(4);
+    setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
     setStyleSheet(R"(
         QListWidget {
             background: #1e1e1e;
@@ -51,4 +54,20 @@ void ThumbnailPanel::setCurrentPage(int idx) {
         setCurrentRow(idx);
         blockSignals(false);
     }
+}
+
+void ThumbnailPanel::wheelEvent(QWheelEvent *e) {
+    const QPoint pixelDelta = e->pixelDelta();
+    int dy = 0;
+    if (!pixelDelta.isNull()) {
+        dy = pixelDelta.y() * WHEEL_PIXELS_PER_STEP / 160;
+    } else {
+        dy = e->angleDelta().y() * WHEEL_PIXELS_PER_STEP / 120;
+    }
+    if (dy != 0) {
+        verticalScrollBar()->setValue(verticalScrollBar()->value() - dy);
+        e->accept();
+        return;
+    }
+    QListWidget::wheelEvent(e);
 }
