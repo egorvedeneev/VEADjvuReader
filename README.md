@@ -1,4 +1,4 @@
-# DjVu Reader
+# VEA DjVu Reader
 
 Лёгкий кроссплатформенный просмотрщик DjVu на Qt6 + libdjvulibre.  
 Поддерживает Windows и macOS.
