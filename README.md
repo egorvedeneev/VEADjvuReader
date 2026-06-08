@@ -17,7 +17,7 @@
 
 ## Сборка на Windows
 
-### 1. Установи зависимости
+### 1. Установка зависимостей
 
 **Qt 6** (>= 6.4):  
 https://www.qt.io/download-qt-installer  
@@ -32,7 +32,7 @@ C:\vcpkg\vcpkg install djvulibre:x64-windows
 
 **CMake** (>= 3.20): https://cmake.org/download/
 
-### 2. Собери проект
+### 2. Соборка проекта
 
 Открой **x64 Native Tools Command Prompt for VS 2022**:
 
@@ -58,14 +58,14 @@ C:\Qt\6.x.x\msvc2022_64\bin\windeployqt.exe DjVuReader.exe
 
 ## Сборка на macOS
 
-### 1. Установи зависимости
+### 1. Установка зависимостей
 
 ```bash
 # Homebrew (если нет: https://brew.sh)
 brew install qt djvulibre cmake
 ```
 
-### 2. Собери проект
+### 2. Соборка проекта
 
 ```bash
 cd djvu-reader
@@ -127,4 +127,4 @@ djvu-reader/
 
 ## Лицензия
 
-MIT — делай что хочешь. libdjvulibre распространяется под GPL v2.
+MIT. libdjvulibre распространяется под GPL v2. Да и вообще можно что угодно делать с этим проектом. 
