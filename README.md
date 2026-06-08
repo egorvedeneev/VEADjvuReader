@@ -32,7 +32,7 @@ C:\vcpkg\vcpkg install djvulibre:x64-windows
 
 **CMake** (>= 3.20): https://cmake.org/download/
 
-### 2. Соборка проекта
+### 2. Сборка проекта
 
 Открой **x64 Native Tools Command Prompt for VS 2022**:
 
@@ -65,7 +65,7 @@ C:\Qt\6.x.x\msvc2022_64\bin\windeployqt.exe DjVuReader.exe
 brew install qt djvulibre cmake
 ```
 
-### 2. Соборка проекта
+### 2. Сборка проекта
 
 ```bash
 cd djvu-reader
