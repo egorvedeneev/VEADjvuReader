@@ -52,6 +52,8 @@ set(SOURCES
 
 qt_add_executable(DjVuReader ${SOURCES})
 
+set_target_properties(DjVuReader PROPERTIES OUTPUT_NAME "VEA Djvu Reader")
+
 target_include_directories(DjVuReader PRIVATE src)
 
 if(DJVU_FOUND)
@@ -72,6 +74,7 @@ target_link_libraries(DjVuReader PRIVATE
 if(APPLE)
     set_target_properties(DjVuReader PROPERTIES
         MACOSX_BUNDLE TRUE
+        MACOSX_BUNDLE_BUNDLE_NAME "VEA Djvu Reader"
         MACOSX_BUNDLE_GUI_IDENTIFIER  com.opensource.djvureader
         MACOSX_BUNDLE_BUNDLE_VERSION  ${PROJECT_VERSION}
         MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION}

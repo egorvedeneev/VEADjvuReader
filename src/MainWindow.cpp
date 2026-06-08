@@ -46,7 +46,7 @@ MainWindow::~MainWindow() {}
 
 // ─────────────────────────────────────────────────────────────────────────────
 void MainWindow::setupUi() {
-    setWindowTitle("DjVu Reader");
+    setWindowTitle(QApplication::applicationName());
     resize(1100, 780);
 
     // Central page view
@@ -204,7 +204,8 @@ void MainWindow::openFile(const QString &path) {
 
 void MainWindow::onDocumentOpened(int pageCount) {
     setDocumentActionsEnabled(true);
-    setWindowTitle(QFileInfo(m_doc->filePath()).fileName() + " — DjVu Reader");
+    setWindowTitle(QFileInfo(m_doc->filePath()).fileName() + " — "
+                   + QApplication::applicationName());
     m_pageSpinBox->setMaximum(pageCount);
     m_pageCountLabel->setText(QString(" / %1").arg(pageCount));
     m_currentPage = 0;
